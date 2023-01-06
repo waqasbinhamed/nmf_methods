@@ -1,6 +1,6 @@
-# NuMF
+# Nonnegative Matrix Factorization (NMF) Methods
 
-Python implementation of Nonnegative Matrix Factorization (NMF) including:
+Python implementation of Nonnegative Matrix Factorization (NMF) methods including:
 1. Nonnegative Unimodal Matrix Factorization (NUMF); to learn more about this 
 method please refer to https://ieeexplore.ieee.org/iel7/9413349/9413350/09414631.pdf. The `numf_toy_example.ipynb` notebook runs NUMF and Multigrid versions of NUMF on a toy example.
 2. NMF with Sum-of-Norms Clustering Regularization (NMF-SON); to learn more 
