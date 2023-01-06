@@ -1,0 +1,8 @@
+numpy
+scipy
+
+# for running notebooks install the following packages
+# pandas
+# jupyter
+# matplotlib
+# scikit-learn
