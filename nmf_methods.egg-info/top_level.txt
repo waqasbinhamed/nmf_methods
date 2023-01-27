@@ -1,1 +1,1 @@
-nmf
+nmf_methods

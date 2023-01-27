@@ -1,5 +1,5 @@
 import numpy as np
-from nmf.numf.utils import create_D, create_Up
+from nmf_methods.numf.utils import create_D, create_Up
 np.random.seed(42)
 
 
