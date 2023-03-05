@@ -1,9 +1,11 @@
 import numpy as np
-from nmf_son.utils import non_neg, calculate_gscore
+from nmf_methods.nmf_son.utils import non_neg, nmf_son_ini, nmf_son_post_it
 
-
-ES_TOL = 1e-5
 INNER_TOL = 1e-6
+
+
+def update_hj(Mj, wj):
+    return non_neg(wj.T @ Mj) / (np.linalg.norm(wj) ** 2)
 
 
 def update_wj(W, Mj, new_z, hj, j, _lambda, itermax=1000):
@@ -50,23 +52,11 @@ def update_wj(W, Mj, new_z, hj, j, _lambda, itermax=1000):
     return new_z
 
 
-def nmf_son(M, W, H, _lambda=0.0, itermax=1000, early_stop=True, verbose=False):
+def base(M, W, H, lam=0.0, itermin=100, itermax=1000, early_stop=True, verbose=False, scale_reg=False):
     """Calculates NMF decomposition of the M matrix with andersen acceleration options."""
-    m, n = M.shape
     r = W.shape[1]
 
-    fscores = np.full((itermax + 1,), np.NaN)
-    gscores = np.full((itermax + 1,), np.NaN)
-    lambda_vals = np.full((itermax + 1,), np.NaN)
-
-    fscores[0] = np.linalg.norm(M - W @ H, 'fro')
-    gscores[0] = calculate_gscore(W)
-
-    scaled_lambda = lambda_vals[0] = (fscores[0] / gscores[0]) * _lambda
-
-    best_score = np.Inf
-    W_best = np.zeros((m, r))
-    H_best = np.zeros((r, n))
+    fscores, gscores, lambda_vals = nmf_son_ini(M, W, H, lam, itermax, scale_reg)
 
     Mj = M - W @ H
     for it in range(1, itermax + 1):
@@ -77,30 +67,15 @@ def nmf_son(M, W, H, _lambda=0.0, itermax=1000, early_stop=True, verbose=False):
             Mj = Mj + wj @ hj
 
             # update h_j
-            H[j: j + 1, :] = hj = non_neg(wj.T @ Mj) / (np.linalg.norm(wj) ** 2)
+            H[j: j + 1, :] = hj = update_hj(Mj, wj)
 
             # update w_j
-            W[:, j: j + 1] = wj = update_wj(W, Mj, wj, hj, j, scaled_lambda)
-
+            W[:, j: j + 1] = wj = update_wj(W, Mj, wj, hj, j, lambda_vals[it - 1])
             Mj = Mj - wj @ hj
 
-        fscores[it] = 0.5 * np.linalg.norm(M - W @ H, 'fro') ** 2
-        gscores[it] = calculate_gscore(W)
-        total_score = fscores[it] + scaled_lambda * gscores[it]
+        fscores, gscores, lambda_vals, stop_now = nmf_son_post_it(M, W, H, it, fscores, gscores, lambda_vals,
+                                                                  early_stop, verbose, scale_reg, lam, itermin)
+        if stop_now:
+            break
 
-        if total_score > best_score:
-            best_score = total_score
-            W_best = W
-            H_best = H
-
-        if early_stop and it > 2:
-            old_score = fscores[it - 1] + lambda_vals[it - 2] * gscores[it - 1]
-            if abs(old_score - total_score) / old_score < ES_TOL:
-                break
-
-        scaled_lambda = lambda_vals[it] = (fscores[it] / gscores[it]) * _lambda
-
-        if verbose:
-            print(f'Iteration: {it}, f={fscores[it]}, g={gscores[it]},  total={total_score}')
-
-    return W_best, H_best, W, H, fscores[:it + 1], gscores[:it + 1], np.r_[np.NaN, lambda_vals[1: it + 1]]
+    return W, H, fscores[:it + 1], gscores[:it + 1], np.r_[np.NaN, lambda_vals[1: it + 1]]
