@@ -158,8 +158,9 @@ def plot_combined_H(H, img_size, figsize, num_rows=1, normalize_row=False, filen
 
     fig, ax = plt.subplots(figsize=figsize)
     im = ax.imshow(large_mat, cmap='gray')
-    cax = ax.inset_axes([1.05, 0, 0.05, 1])
-    plt.colorbar(im, cax=cax)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes('right', size='3%', pad=0.1)
+    fig.colorbar(im, cax=cax, orientation='vertical')
 
     plt.tight_layout()
 
@@ -219,8 +220,8 @@ def merge_images(images_list, filename, delete_images=False):
             os.remove(fp)
 
 
-def plot_and_merge(W, H, imgsize, figsize, fontsize, filenames, num_rows):
+def plot_and_merge(W, H, imgsize, figsize, fontsize, filenames, num_rows, delete=False):
     plot_W_mats(W, figsize, fontsize=fontsize, n_rows=num_rows, filename=filenames[0])
     plot_separate_H(H, imgsize, figsize=figsize, fontsize=fontsize, num_rows=num_rows, filename=filenames[1])
     plot_combined_H(H, imgsize, figsize=figsize, num_rows=num_rows, filename=filenames[2])
-    merge_images(filenames[:3], filenames[3], delete_images=True)
+    merge_images(filenames[:3], filenames[3], delete_images=delete)
