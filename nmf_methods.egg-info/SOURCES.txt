@@ -8,7 +8,7 @@ nmf_methods.egg-info/requires.txt
 nmf_methods.egg-info/top_level.txt
 nmf_methods/nmf_son/__init__.py
 nmf_methods/nmf_son/alternate_wj_vers.py
-nmf_methods/nmf_son/andersen_acc.py
+nmf_methods/nmf_son/anderson_acc.py
 nmf_methods/nmf_son/base.py
 nmf_methods/nmf_son/her_acc.py
 nmf_methods/nmf_son/new.py

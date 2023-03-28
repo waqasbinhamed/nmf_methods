@@ -6,16 +6,30 @@ INNER_TOL = 1e-6
 EPS = 1e-12
 
 
+def proj_simplex(y):
+    return non_neg(y - np.max((np.cumsum(-1 * np.sort(-y, axis=0), axis=0) - 1) /
+                              np.arange(1, y.shape[0] + 1).reshape(y.shape[0], 1), axis=0))
+
+
 def sep_update_H(M, W, H):
     """Calculates the updated H without altering the W matrix."""
-
-    def proj_simplex(y):
-        return non_neg(y - np.max((np.cumsum(-1 * np.sort(-y, axis=0), axis=0) - 1) /
-                                  np.arange(1, y.shape[0] + 1).reshape(y.shape[0], 1), axis=0))
-
     WtW = W.T @ W
     H = proj_simplex(H - (WtW @ H - W.T @ M) / np.linalg.norm(WtW, ord=2))
 
+    return H
+
+
+def alt_update_H(M, W, H):
+    m, rank = W.shape
+    Mi = M - W @ H
+    proj_simplex_2 = lambda y: non_neg(y - np.max(
+        (np.cumsum(-1 * np.sort(-y, axis=1), axis=1) - 1) / np.arange(1, y.shape[1] + 1).reshape(1, y.shape[1])))
+    for i in range(rank):
+        wi = W[:, i: i + 1]
+        hi = H[i: i + 1, :]
+        Mi = Mi + wi @ hi
+        H[i: i + 1, :] = hi = proj_simplex_2((wi.T @ Mi) / (wi.T @ wi))
+        Mi = Mi - wi @ hi
     return H
 
 
@@ -91,6 +105,26 @@ def new(M, W, H, lam=0.0, itermin=100, itermax=1000, early_stop=True, verbose=Fa
     for it in range(1, itermax + 1):
         # update H
         H = sep_update_H(M, W, H)
+
+        # update W
+        W = sep_update_W_new(M, W, H, lambda_vals[it - 1])
+
+        fscores, gscores, lambda_vals, stop_now = nmf_son_post_it(M, W, H, it, fscores, gscores, lambda_vals,
+                                                                  early_stop, verbose, scale_reg, lam, itermin)
+        if stop_now:
+            break
+
+    return W, H, fscores[:it + 1], gscores[:it + 1], np.r_[np.NaN, lambda_vals[1: it + 1]]
+
+
+def new_2(M, W, H, lam=0.0, itermin=100, itermax=1000, early_stop=True, verbose=False, scale_reg=False):
+    """Calculates NMF decomposition of the M matrix with new acceleration."""
+
+    fscores, gscores, lambda_vals = nmf_son_ini(M, W, H, lam, itermax, scale_reg)
+
+    for it in range(1, itermax + 1):
+        # update H
+        H = alt_update_H(M, W, H)
 
         # update W
         W = sep_update_W_new(M, W, H, lambda_vals[it - 1])
