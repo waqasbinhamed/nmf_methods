@@ -1,8 +1,0 @@
-Metadata-Version: 2.1
-Name: nmf-methods
-Version: 0.35
-Summary: Python implementation of Nonnegative Matrix Factorization methods.
-Home-page: https://github.com/waqasbinhamed/nmf_methods
-Author: Waqas Bin Hamed
-Author-email: waqasbinhamed@gmail.com
-Requires-Python: >=3.6.0
